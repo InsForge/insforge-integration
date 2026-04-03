@@ -1,15 +1,10 @@
-# Auth0 + InsForge Todo App
+# InsForge + Auth0
 
 A Next.js application using **Auth0** for authentication and **InsForge** for database, with Row Level Security (RLS) so users can only access their own data.
 
-## Features
-
-- Auth0 authentication (login, logout, session management)
-- InsForge database with RLS
-- Todo CRUD (create, read, update, delete)
-- Light/dark theme switcher
-- Auth0 Post Login Action signs an InsForge-compatible JWT
-- Built with Next.js 15, Tailwind CSS, TypeScript
+- [Live Demo](https://auth0auth.insforge.site)
+- [Source Code](https://github.com/InsForge/insforge-integration/tree/main/auth/auth0)
+- [Integration Guide](https://insforge.dev/integrations/auth0)
 
 ## Prerequisites
 
@@ -19,41 +14,14 @@ A Next.js application using **Auth0** for authentication and **InsForge** for da
 
 ## Setup
 
-### 1. Clone and install
-
-```bash
-git clone <your-repo-url>
-cd Auth0_Insforge
-npm install
-```
-
-### 2. Configure environment variables
-
-```bash
-cp .env.example .env.local
-```
-
-Fill in `.env.local`:
-
-```env
-# InsForge
-NEXT_PUBLIC_INSFORGE_URL=https://your-app.region.insforge.app
-
-# Auth0
-AUTH0_SECRET='use [openssl rand -hex 32] to generate a 32 bytes value'
-APP_BASE_URL='http://localhost:3000'
-AUTH0_DOMAIN='your-tenant.us.auth0.com'
-AUTH0_CLIENT_ID='your_auth0_client_id'
-AUTH0_CLIENT_SECRET='your_auth0_client_secret'
-```
-
-### 3. Configure Auth0
+### 1. Configure Auth0
 
 1. In Auth0 Dashboard, create a **Regular Web Application**
 2. Set **Allowed Callback URLs** to `http://localhost:3000/auth/callback`
 3. Set **Allowed Logout URLs** to `http://localhost:3000`
+4. Note down the **Domain**, **Client ID**, and **Client Secret**
 
-### 4. Create Auth0 Post Login Action
+### 2. Create Auth0 Post Login Action
 
 1. Go to **Actions** > **Library** > **Build Custom**
 2. Name: `Generate InsForge Token`, Trigger: **Post Login**
@@ -82,7 +50,27 @@ exports.onExecutePostLogin = async (event, api) => {
 
 6. **Deploy**, then go to **Actions** > **Flows** > **Login** and drag the action into the flow
 
-### 5. Create the database table
+### 3. Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in `.env.local`:
+
+```env
+# Auth0
+AUTH0_SECRET='use [openssl rand -hex 32] to generate a 32 bytes value'
+APP_BASE_URL='http://localhost:3000'
+AUTH0_DOMAIN='your-tenant.us.auth0.com'
+AUTH0_CLIENT_ID='your_auth0_client_id'
+AUTH0_CLIENT_SECRET='your_auth0_client_secret'
+
+# InsForge
+NEXT_PUBLIC_INSFORGE_URL='YOUR_INSFORGE_URL'
+```
+
+### 4. Create the database table
 
 Run in the InsForge SQL Editor:
 
@@ -113,10 +101,19 @@ create policy "Users can manage own todos"
   with check (user_id = requesting_user_id());
 ```
 
-### 6. Run
+### 5. Run
 
 ```bash
+npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Key Implementation Notes
+
+- `lib/auth0.ts`: configures `beforeSessionSaved` hook to extract `insforge_token` from the Auth0 ID token into the session.
+- `lib/insforge.ts`: initializes the InsForge client with the token from Auth0's session.
+- Auth0 Post Login Action signs a separate JWT with InsForge's secret, embedded as a custom claim in the ID token.
+- Since Auth0 user IDs are strings (e.g., `auth0|64a...`), `requesting_user_id()` reads the `sub` claim as text instead of UUID.
+- RLS policies ensure users can only access their own data.

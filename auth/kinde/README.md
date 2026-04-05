@@ -24,56 +24,25 @@ A Next.js application using **Kinde** for authentication and **InsForge** for da
 6. Enable desired authentication methods (Email, Google, etc.) under **Authentication**
 7. Under **App Keys**, note down the **Domain**, **Client ID**, and **Client Secret**
 
-## Step 2: Get Your InsForge JWT Secret
+## Step 2: Set Up Your InsForge Project
 
-1. Open your InsForge dashboard
-2. Navigate to your project settings
-3. Copy the **JWT Secret** — you'll use it in a later step to sign tokens for InsForge
+Create a new project or link an existing one:
 
-## Step 3: Create a Helper Function for User IDs
+```bash
+# Create a new project
+npx @insforge/cli create
 
-Run the following SQL in the **InsForge SQL Editor**. Since Kinde user IDs are strings (e.g., `kp_1234abcd`) and InsForge's `auth.uid()` returns UUID, create a SQL function that reads the `sub` claim as text:
-
-```sql
-create or replace function public.requesting_user_id()
-returns text
-language sql stable
-as $$
-  select nullif(
-    current_setting('request.jwt.claims', true)::json->>'sub',
-    ''
-  )::text
-$$;
+# Or link an existing project
+npx @insforge/cli link --project-id <your-project-id>
 ```
 
-## Step 4: Set Up Your Database Schema
+Then note down the **URL**, **Anon Key**, and **JWT Secret** from the InsForge dashboard (project settings). You'll use the JWT Secret in a later step to sign tokens for InsForge.
 
-Still in the **InsForge SQL Editor**, create your table. Use `TEXT` columns for user-linked fields. Set `requesting_user_id()` as the **default value** for the `user_id` column so it's automatically populated from the JWT on insert.
-
-```sql
-create table public.todos (
-  id uuid primary key default gen_random_uuid(),
-  user_id text not null default requesting_user_id(),
-  title text not null,
-  is_complete boolean default false,
-  created_at timestamptz default now()
-);
-
-alter table public.todos enable row level security;
-
-create policy "Users can manage own todos"
-  on public.todos for all to authenticated
-  using (user_id = requesting_user_id())
-  with check (user_id = requesting_user_id());
-```
-
-## Step 5: Set Up Your Next.js Application
+## Step 3: Set Up Your Application
 
 Install the required dependencies:
 
 ```bash
-npx create-next-app@latest my-app
-cd my-app
 npm install @kinde-oss/kinde-auth-nextjs @insforge/sdk jsonwebtoken
 npm install --save-dev @types/jsonwebtoken
 ```
@@ -103,58 +72,33 @@ import { handleAuth } from "@kinde-oss/kinde-auth-nextjs/server";
 export const GET = handleAuth();
 ```
 
-## Step 6: Initialize the InsForge Client with Kinde
+## Step 4: Set Up InsForge Integration
 
-Create a utility that retrieves the Kinde user, signs a JWT with the InsForge JWT secret, and passes it to InsForge:
+Ask your agent to complete the following steps:
 
-```typescript
-import { createClient } from '@insforge/sdk';
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import jwt from 'jsonwebtoken';
+### 1. Create the InsForge client utility
 
-export async function createInsForgeClient() {
-  const { getUser } = getKindeServerSession();
-  const user = await getUser();
-
-  let edgeFunctionToken: string | undefined;
-  if (user) {
-    edgeFunctionToken = jwt.sign(
-      {
-        sub: user.id,
-        role: 'authenticated',
-        aud: 'insforge-api',
-        email: user.email,
-      },
-      process.env.INSFORGE_JWT_SECRET!,
-      { expiresIn: '1h' }
-    );
-  }
-
-  return createClient({
-    baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    edgeFunctionToken,
-  });
-}
+```text
+Create the InsForge client utility that signs a JWT using the Kinde user session.
 ```
 
-This signs a new JWT with InsForge's secret containing the Kinde user's `sub` claim, so InsForge can validate the token and extract user identity for RLS.
+This creates a server-side utility (`lib/insforge.ts`) that gets the Kinde user via `getKindeServerSession()`, signs a JWT with the InsForge secret, and passes it as `edgeFunctionToken`.
 
-## Step 7: Use InsForge Services
+### 2. Create the database schema
 
-```typescript
-import { createInsForgeClient } from '@/lib/insforge';
-
-// Insert a todo — user_id is automatically set from the Kinde JWT
-const insforge = await createInsForgeClient();
-const { data, error } = await insforge.database
-  .from('todos')
-  .insert({ title: 'My first todo' });
-
-// Query todos — RLS ensures users only see their own data
-const { data: todos } = await insforge.database
-  .from('todos')
-  .select('*');
+```text
+Create a todos table with RLS. Columns: id, user_id, title, is_complete, created_at. Users should only be able to access their own todos.
 ```
+
+This creates the `requesting_user_id()` helper function (since Kinde user IDs are strings, not UUIDs) and a `todos` table with Row Level Security policies.
+
+### 3. Build the todo list page
+
+```text
+Build a todo list page with full CRUD — create, read, update, and delete todos.
+```
+
+This creates a page that uses the InsForge client to manage todos. RLS ensures users only see their own data.
 
 ## Run This Example
 

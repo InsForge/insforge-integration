@@ -37,56 +37,25 @@ A Next.js application using **WorkOS AuthKit** for authentication and **InsForge
 
 4. Save the template
 
-## Step 3: Get Your InsForge JWT Secret
+## Step 3: Set Up Your InsForge Project
 
-1. Open your InsForge dashboard
-2. Navigate to your project settings
-3. Copy the **JWT Secret**
+Create a new project or link an existing one:
 
-## Step 4: Create a Helper Function for User IDs
+```bash
+# Create a new project
+npx @insforge/cli create
 
-Run the following SQL in the **InsForge SQL Editor**. Since WorkOS user IDs are strings (e.g., `user_01H...`) and InsForge's `auth.uid()` returns UUID, create a SQL function that reads the `sub` claim as text:
-
-```sql
-create or replace function public.requesting_user_id()
-returns text
-language sql stable
-as $$
-  select nullif(
-    current_setting('request.jwt.claims', true)::json->>'sub',
-    ''
-  )::text
-$$;
+# Or link an existing project
+npx @insforge/cli link --project-id <your-project-id>
 ```
 
-## Step 5: Set Up Your Database Schema
+Then note down the **URL**, **Anon Key**, and **JWT Secret** from the InsForge dashboard (project settings).
 
-Still in the **InsForge SQL Editor**, create your table. Use `TEXT` columns for user-linked fields. Set `requesting_user_id()` as the **default value** for the `user_id` column so it's automatically populated from the JWT on insert.
-
-```sql
-create table public.todos (
-  id uuid primary key default gen_random_uuid(),
-  user_id text not null default requesting_user_id(),
-  title text not null,
-  is_complete boolean default false,
-  created_at timestamptz default now()
-);
-
-alter table public.todos enable row level security;
-
-create policy "Users can manage own todos"
-  on public.todos for all to authenticated
-  using (user_id = requesting_user_id())
-  with check (user_id = requesting_user_id());
-```
-
-## Step 6: Set Up Your Next.js Application
+## Step 4: Set Up Your Application
 
 Install the required dependencies:
 
 ```bash
-npx create-next-app@latest my-app
-cd my-app
 npm install @workos-inc/authkit-nextjs @insforge/sdk jsonwebtoken
 npm install --save-dev @types/jsonwebtoken
 ```
@@ -106,101 +75,41 @@ NEXT_PUBLIC_INSFORGE_ANON_KEY='YOUR_INSFORGE_ANON_KEY'
 INSFORGE_JWT_SECRET='YOUR_INSFORGE_JWT_SECRET'
 ```
 
-Set up the callback route at `app/callback/route.ts`:
+## Step 5: Set Up InsForge Integration
 
-```typescript
-import { handleAuth } from '@workos-inc/authkit-nextjs';
+Ask your agent to complete the following steps:
 
-export const GET = handleAuth();
+### 1. Set up WorkOS AuthKit and InsForge integration
+
+```text
+Set up WorkOS AuthKit and InsForge integration for my Next.js app — callback route, provider, middleware, and login route.
 ```
 
-Add the AuthKit provider in `app/layout.tsx`:
+This creates the callback route (`app/callback/route.ts`), AuthKitProvider wrapper (`app/layout.tsx`), middleware (`middleware.ts`), and login route (`app/login/route.ts`).
 
-```typescript
-import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
+### 2. Create the InsForge client utility
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <AuthKitProvider>{children}</AuthKitProvider>
-      </body>
-    </html>
-  );
-}
+```text
+Create the InsForge client utility that uses the WorkOS session to sign a JWT for InsForge.
 ```
 
-Add the middleware at `middleware.ts`:
+This creates a server-side utility (`lib/insforge.ts`) that gets the WorkOS user via `withAuth()`, signs a JWT with the InsForge secret, and passes it as `edgeFunctionToken`.
 
-```typescript
-import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
+### 3. Create the database schema
 
-export default authkitMiddleware();
-
-export const config = { matcher: ['/', '/api/:path*'] };
+```text
+Create a todos table with RLS. Columns: id, user_id, title, is_complete, created_at. Users should only be able to access their own todos.
 ```
 
-Create a login route handler at `app/login/route.ts` to redirect unauthenticated users to the WorkOS sign-in page:
+This creates the `requesting_user_id()` helper function (since WorkOS user IDs are strings, not UUIDs) and a `todos` table with Row Level Security policies.
 
-```typescript
-import { getSignInUrl } from '@workos-inc/authkit-nextjs';
-import { redirect } from 'next/navigation';
+### 4. Build the todo list page
 
-export async function GET() {
-  const signInUrl = await getSignInUrl();
-  redirect(signInUrl);
-}
+```text
+Build a todo list page with full CRUD — create, read, update, and delete todos.
 ```
 
-> **Note:** `withAuth({ ensureSignedIn: true })` can cause cookie errors in server components (Next.js 16 limitation). Use `redirect('/login')` in your page to handle unauthenticated users instead.
-
-## Step 7: Initialize the InsForge Client with WorkOS
-
-Create a utility that retrieves the WorkOS user and signs an InsForge-compatible JWT at `lib/insforge.ts`:
-
-```typescript
-import { createClient } from '@insforge/sdk';
-import { withAuth } from '@workos-inc/authkit-nextjs';
-import jwt from 'jsonwebtoken';
-
-export async function createInsForgeClient() {
-  const { user } = await withAuth();
-
-  if (!user) return null;
-
-  const insforgeToken = jwt.sign(
-    {
-      sub: user.id,
-      role: 'authenticated',
-      aud: 'insforge-api',
-      exp: Math.floor(Date.now() / 1000) + 60 * 60,
-    },
-    process.env.INSFORGE_JWT_SECRET!
-  );
-
-  return createClient({
-    baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    edgeFunctionToken: insforgeToken,
-  });
-}
-```
-
-## Step 8: Use InsForge Services
-
-```typescript
-import { createInsForgeClient } from '@/lib/insforge';
-
-// Insert a todo — user_id is automatically set from the WorkOS JWT
-const insforge = await createInsForgeClient();
-const { data, error } = await insforge.database
-  .from('todos')
-  .insert({ title: 'My first todo' });
-
-// Query todos — RLS ensures users only see their own data
-const { data: todos } = await insforge.database
-  .from('todos')
-  .select('*');
-```
+This creates a page that uses the InsForge client to manage todos. RLS ensures users only see their own data.
 
 ## Run This Example
 

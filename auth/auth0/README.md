@@ -23,11 +23,19 @@ A Next.js application using **Auth0** for authentication and **InsForge** for da
    - **Allowed Logout URLs**: `http://localhost:3000`
 5. Note down the **Domain**, **Client ID**, and **Client Secret**
 
-## Step 2: Get Your InsForge JWT Secret
+## Step 2: Set Up Your InsForge Project
 
-1. Open your InsForge dashboard
-2. Navigate to your project settings
-3. Copy the **JWT Secret** — you'll use it in the next step to sign tokens Auth0 issues
+Create a new project or link an existing one:
+
+```bash
+# Create a new project
+npx @insforge/cli create
+
+# Or link an existing project
+npx @insforge/cli link --project-id <your-project-id>
+```
+
+Then note down the **URL**, **Anon Key**, and **JWT Secret** from the InsForge dashboard (project settings). You'll use the JWT Secret in the next step to sign tokens Auth0 issues.
 
 ## Step 3: Create a Post Login Action in Auth0
 
@@ -62,50 +70,11 @@ exports.onExecutePostLogin = async (event, api) => {
 6. Click **Deploy**
 7. Go to **Actions** > **Triggers** > **post-login**, drag your action into the flow, and click **Apply**
 
-## Step 4: Create a Helper Function for User IDs
-
-Run the following SQL in the **InsForge SQL Editor**. Since Auth0 user IDs are strings (e.g., `auth0|64a...`) and InsForge's `auth.uid()` returns UUID, create a SQL function that reads the `sub` claim as text:
-
-```sql
-create or replace function public.requesting_user_id()
-returns text
-language sql stable
-as $$
-  select nullif(
-    current_setting('request.jwt.claims', true)::json->>'sub',
-    ''
-  )::text
-$$;
-```
-
-## Step 5: Set Up Your Database Schema
-
-Still in the **InsForge SQL Editor**, create your table. Use `TEXT` columns for user-linked fields. Set `requesting_user_id()` as the **default value** for the `user_id` column so it's automatically populated from the JWT on insert.
-
-```sql
-create table public.todos (
-  id uuid primary key default gen_random_uuid(),
-  user_id text not null default requesting_user_id(),
-  title text not null,
-  is_complete boolean default false,
-  created_at timestamptz default now()
-);
-
-alter table public.todos enable row level security;
-
-create policy "Users can manage own todos"
-  on public.todos for all to authenticated
-  using (user_id = requesting_user_id())
-  with check (user_id = requesting_user_id());
-```
-
-## Step 6: Set Up Your Next.js Application
+## Step 4: Set Up Your Application
 
 Install the required dependencies:
 
 ```bash
-npx create-next-app@latest my-app
-cd my-app
 npm install @auth0/nextjs-auth0 @insforge/sdk
 ```
 
@@ -124,95 +93,33 @@ NEXT_PUBLIC_INSFORGE_URL='YOUR_INSFORGE_URL'
 NEXT_PUBLIC_INSFORGE_ANON_KEY='YOUR_INSFORGE_ANON_KEY'
 ```
 
-Create the Auth0 client at `lib/auth0.ts`:
+## Step 5: Set Up InsForge Integration
 
-> **Important:** Auth0 v4 SDK filters custom claims from the ID token by default. You must configure the `beforeSessionSaved` hook to manually extract `insforge_token` from the ID token and write it into the session, otherwise `getSession().user` will not contain this field.
+Ask your agent to complete the following steps:
 
-```typescript
-import { Auth0Client } from "@auth0/nextjs-auth0/server";
+### 1. Set up Auth0 and InsForge integration
 
-export const auth0 = new Auth0Client({
-  beforeSessionSaved: async (session, idToken) => {
-    if (idToken) {
-      try {
-        const parts = idToken.split(".");
-        const payload = JSON.parse(
-          Buffer.from(parts[1], "base64url").toString()
-        );
-        const insforgeToken = payload["https://insforge.dev/insforge_token"];
-        if (insforgeToken) {
-          session.user["https://insforge.dev/insforge_token"] = insforgeToken;
-        }
-      } catch {}
-    }
-    return session;
-  },
-});
+```text
+Set up Auth0 and InsForge integration for my Next.js app — Auth0 client, middleware, provider, and InsForge client utility.
 ```
 
-Add the Auth0 middleware at `middleware.ts` in your project root. This replaces the API route — no `app/api/auth/[auth0]/route.js` is needed in v4:
+This creates the Auth0 client with token extraction (`lib/auth0.ts`), middleware (`middleware.ts`), Auth0Provider wrapper (`app/layout.tsx`), and the InsForge client utility (`lib/insforge.ts`).
 
-```typescript
-import { auth0 } from "@/lib/auth0";
+### 2. Create the database schema
 
-export const middleware = auth0.middleware();
-
-export const config = {
-  matcher: ["/auth/:path*", "/protected/:path*"],
-};
+```text
+Create a todos table with RLS. Columns: id, user_id, title, is_complete, created_at. Users should only be able to access their own todos.
 ```
 
-Wrap your application with `Auth0Provider` in `app/layout.tsx`:
+This creates the `requesting_user_id()` helper function (since Auth0 user IDs are strings, not UUIDs) and a `todos` table with Row Level Security policies.
 
-```typescript
-import { Auth0Provider } from '@auth0/nextjs-auth0/client';
+### 3. Build the todo list page
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <Auth0Provider>{children}</Auth0Provider>
-      </body>
-    </html>
-  );
-}
+```text
+Build a todo list page with full CRUD — create, read, update, and delete todos.
 ```
 
-## Step 7: Initialize the InsForge Client with Auth0
-
-Create a utility to initialize the InsForge client using the token from Auth0's session:
-
-```typescript
-import { createClient } from '@insforge/sdk';
-import { auth0 } from '@/lib/auth0';
-
-export async function createInsForgeClient() {
-  const session = await auth0.getSession();
-  const insforgeToken = session?.user?.["https://insforge.dev/insforge_token"];
-
-  return createClient({
-    baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL,
-    edgeFunctionToken: insforgeToken,
-  });
-}
-```
-
-## Step 8: Use InsForge Services
-
-```typescript
-import { createInsForgeClient } from '@/lib/insforge';
-
-// Insert a todo — user_id is automatically set from the Auth0 JWT
-const insforge = await createInsForgeClient();
-const { data, error } = await insforge.database
-  .from('todos')
-  .insert({ title: 'My first todo' });
-
-// Query todos — RLS ensures users only see their own data
-const { data: todos } = await insforge.database
-  .from('todos')
-  .select('*');
-```
+This creates a page that uses the InsForge client to manage todos. RLS ensures users only see their own data.
 
 ## Run This Example
 

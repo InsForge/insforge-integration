@@ -1,39 +1,52 @@
 # InsForge + Clerk
 
-A React (Vite) CRM application using **Clerk** for authentication and **InsForge** for database, with Row Level Security (RLS) so users can only access their own data.
+[Clerk](https://clerk.com) is an authentication and user management platform that provides pre-built UI components and APIs for sign-up, sign-in, and user profiles. This example shows how to integrate Clerk with InsForge using Clerk's **JWT Templates** feature — Clerk signs tokens with InsForge's JWT secret, so InsForge accepts them natively for Row Level Security.
 
-- [Live Demo](https://clerkauth.insforge.site)
+This is a React (Vite) todo list app where users sign in via Clerk and manage their own todos stored in InsForge. RLS policies ensure each user can only access their own data.
+
 - [Source Code](https://github.com/InsForge/insforge-integration/tree/main/auth/clerk)
 - [Integration Guide](https://insforge.dev/integrations/clerk)
 
-## Prerequisites
+## Run This Example
+
+### Step 1: Prerequisites
 
 - An [InsForge](https://insforge.dev) project (self-hosted or cloud)
 - A [Clerk](https://clerk.com) account and application
-- Your InsForge project's **JWT Secret** (found in the InsForge dashboard under project settings)
 
-## Step 1: Set Up Your InsForge Project
-
-Create a new project or link an existing one:
+### Step 2: Clone and Install
 
 ```bash
-# Create a new project
-npx @insforge/cli create
+git clone https://github.com/InsForge/insforge-integration.git
+cd insforge-integration/auth/clerk
+npm install
+cp .env.example .env.local
+```
 
-# Or link an existing project
+### Step 3: Set Up Your InsForge Project
+
+Create a new project in the [InsForge dashboard](https://insforge.dev) and link it:
+
+```bash
 npx @insforge/cli link --project-id <your-project-id>
 ```
 
-Then note down the **URL**, **Anon Key**, and **JWT Secret** from the InsForge dashboard (project settings).
+Get your **InsForge URL** and **Anon Key** from **Project Settings** in the [InsForge dashboard](https://insforge.dev).
 
-## Step 2: Create a JWT Template in Clerk
+Get your JWT Secret:
+
+```bash
+npx @insforge/cli secrets get JWT_SECRET
+```
+
+### Step 4: Create a JWT Template in Clerk
 
 1. Go to your [Clerk Dashboard](https://dashboard.clerk.com)
 2. Navigate to **Configure** > **JWT Templates**
 3. Click **New template** and select **Blank**
 4. Name it `insforge`
 5. Set the **Signing algorithm** to `HS256`
-6. Paste your InsForge **JWT Secret** into the **Signing key** field
+6. Paste your InsForge **JWT Secret** (from Step 3) into the **Signing key** field
 7. Set the token claims to:
 
 ```json
@@ -47,48 +60,24 @@ Then note down the **URL**, **Anon Key**, and **JWT Secret** from the InsForge d
 
 8. Save the template
 
-## Step 3: Set Up Your Application
+### Step 5: Set Up Your Application
 
-Fill in `.env` (or `.env.local` for Next.js):
+Fill in `.env.local`:
 
 ```env
 VITE_INSFORGE_BASE_URL=...
-VITE_INSFORGE_ANON_KEY=...               # optional
-VITE_CLERK_PUBLISHABLE_KEY=pk_...        # required
+VITE_INSFORGE_ANON_KEY=...
+VITE_CLERK_PUBLISHABLE_KEY=pk_...
 ```
 
-## Step 4: Set Up InsForge Integration
-
-Ask your agent to complete the following steps:
-
-### 1. Set up the InsForge client with Clerk
-
-```text
-Set up the InsForge client with Clerk authentication. I'm using React with Vite.
-```
-
-This initializes the InsForge client using `getToken({ template: 'insforge' })` from Clerk's `useAuth()` hook, passed as an async `edgeFunctionToken`.
-
-### 2. Create the database schema
-
-```text
-Create a todos table with RLS. Columns: id, user_id, title, is_complete, created_at. Users should only be able to access their own todos.
-```
-
-This creates the `requesting_user_id()` helper function (since Clerk user IDs are strings, not UUIDs) and a `todos` table with Row Level Security policies.
-
-### 3. Build the todo list page
-
-```text
-Build a todo list page with full CRUD — create, read, update, and delete todos.
-```
-
-This creates a page that uses the InsForge client to manage todos. RLS ensures users only see their own data.
-
-## Run This Example
+### Step 6: Run Locally
 
 ```bash
-cp .env.example .env
-npm install
 npm run dev
 ```
+
+Open [http://localhost:5173](http://localhost:5173) and sign up with a new user through Clerk.
+
+> **Note**: Since authentication is handled entirely by Clerk, you will **not** see any users in the InsForge dashboard under **Auth > Users**. User records are managed in the [Clerk Dashboard](https://dashboard.clerk.com).
+
+For a detailed walkthrough of the integration, see the [Clerk Integration Guide](https://insforge.dev/integrations/clerk).

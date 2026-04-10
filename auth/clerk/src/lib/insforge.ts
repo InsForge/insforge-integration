@@ -1,27 +1,48 @@
-import { createClient } from '@insforge/sdk';
+import { createClient, type InsForgeClient } from '@insforge/sdk';
+import { useAuth } from '@clerk/clerk-react';
+import { useEffect, useMemo, useState } from 'react';
 
-const baseUrl = import.meta.env.VITE_INSFORGE_BASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY as string | undefined;
+export function getInsforgeConfig() {
+  const baseUrl = import.meta.env.VITE_INSFORGE_BASE_URL?.trim();
+  const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY?.trim();
 
-if (!baseUrl) {
-  throw new Error('Missing VITE_INSFORGE_BASE_URL in .env');
+  return {
+    baseUrl: baseUrl ?? '',
+    anonKey: anonKey ?? '',
+    isConfigured: Boolean(baseUrl),
+  };
 }
 
-export type ClerkGetToken = (opts?: { template?: string }) => Promise<string | null>;
+export function useInsforgeClient(): { client: InsForgeClient; isReady: boolean } {
+  const { getToken, isSignedIn } = useAuth();
+  const [isReady, setIsReady] = useState(false);
 
-export async function getRequiredClerkToken(getToken: ClerkGetToken) {
-  const token = await getToken({ template: 'insforge' });
-  if (!token) {
-    throw new Error('Missing Clerk token for template "insforge". Check Clerk JWT template name and claims.');
-  }
-  return token;
+  const client = useMemo(() => {
+    const { baseUrl, anonKey } = getInsforgeConfig();
+
+    if (!baseUrl || !anonKey) {
+      throw new Error(
+        'Missing InsForge configuration. Set VITE_INSFORGE_BASE_URL and VITE_INSFORGE_ANON_KEY.',
+      );
+    }
+
+    return createClient({ baseUrl, anonKey });
+  }, []);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setIsReady(false);
+      return;
+    }
+
+    void (async () => {
+      const token = await getToken({ template: 'insforge' });
+      if (token) {
+        client.getHttpClient().setAuthToken(token);
+      }
+      setIsReady(true);
+    })();
+  }, [client, getToken, isSignedIn]);
+
+  return { client, isReady };
 }
-
-export function createInsforgeClient(token?: string) {
-  return createClient({
-    baseUrl,
-    anonKey: token ? undefined : anonKey,
-    edgeFunctionToken: token,
-  });
-}
-

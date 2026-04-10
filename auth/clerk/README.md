@@ -1,4 +1,4 @@
-# InsForge + Clerk (Todo List)
+# InsForge + Clerk
 
 [Clerk](https://clerk.com) is an authentication and user management platform that provides pre-built UI components and APIs for sign-up, sign-in, and user profiles. This example shows how to integrate Clerk with InsForge using Clerk's **JWT Templates** feature — Clerk signs tokens with InsForge's JWT secret, so InsForge accepts them natively for Row Level Security.
 
@@ -30,6 +30,8 @@ Create a new project in the [InsForge dashboard](https://insforge.dev) and link 
 ```bash
 npx @insforge/cli link --project-id <your-project-id>
 ```
+
+Get your **InsForge URL** and **Anon Key** from **Project Settings** in the [InsForge dashboard](https://insforge.dev).
 
 Get your JWT Secret:
 

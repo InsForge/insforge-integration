@@ -32,6 +32,8 @@ Create a new project in the [InsForge dashboard](https://insforge.dev) and link 
 npx @insforge/cli link --project-id <your-project-id>
 ```
 
+Get your **InsForge URL** and **Anon Key** from **Project Settings** in the [InsForge dashboard](https://insforge.dev).
+
 Get your JWT Secret:
 
 ```bash

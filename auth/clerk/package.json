@@ -1,17 +1,18 @@
 {
-  "name": "insforge-crm",
+  "name": "testreact",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.61.3",
-    "@insforge/sdk": "^1.2.0",
+    "@clerk/clerk-react": "^5.61.4",
+    "@insforge/sdk": "^1.2.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.13.2"

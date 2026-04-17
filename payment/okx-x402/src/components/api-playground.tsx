@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import type { WalletClient } from "viem";
 import { connectWallet, decodeChallenge, signPayment } from "@/lib/x402-client";
+import { ReportView } from "./report-view";
 
 interface Endpoint {
   name: string;
@@ -19,7 +20,7 @@ const ENDPOINTS: Endpoint[] = [
       "Generate an AI-powered crypto market analysis with price data, trend signals, and a market summary.",
     method: "POST",
     path: "/api/report",
-    price: "0.001 USDG",
+    price: "0.000001 USDG",
   },
 ];
 
@@ -106,12 +107,10 @@ export function ApiPlayground() {
     }
   }
 
-  function statusBadgeClass(status: number) {
-    if (status === 402)
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-    if (status === 200)
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+  function statusDotClass(status: number) {
+    if (status === 402) return "bg-amber-500";
+    if (status === 200) return "bg-emerald-500";
+    return "bg-red-500";
   }
 
   function statusLabel(status: number) {
@@ -130,15 +129,7 @@ export function ApiPlayground() {
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center rounded bg-[var(--surface-muted)] px-2 py-0.5 text-xs font-mono font-medium text-[var(--foreground)]">
-                  {ep.method}
-                </span>
-                <span className="text-sm font-mono text-[var(--muted-foreground)]">
-                  {ep.path}
-                </span>
-              </div>
-              <h3 className="text-base font-semibold text-[var(--foreground)] mt-2">
+              <h3 className="text-base font-semibold text-[var(--foreground)]">
                 {ep.name}
               </h3>
               <p className="text-sm text-[var(--muted-foreground)] mt-1">
@@ -167,9 +158,8 @@ export function ApiPlayground() {
           {activeEndpoint === ep.path && flow.step === "payment_required" && (
             <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)]">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(402)}`}
-                >
+                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-[var(--foreground)]">
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusDotClass(402)}`} />
                   402
                 </span>
                 <span className="text-xs text-[var(--muted-foreground)]">
@@ -208,12 +198,22 @@ export function ApiPlayground() {
             </div>
           )}
 
+          {activeEndpoint === ep.path && flow.step === "loading" && (
+            <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
+              <div className="p-6 flex items-center justify-center gap-3">
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--foreground)] animate-pulse" />
+                <span className="text-sm text-[var(--muted-foreground)]">
+                  Generating AI report...
+                </span>
+              </div>
+            </div>
+          )}
+
           {activeEndpoint === ep.path && flow.step === "signing" && (
             <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)]">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(402)}`}
-                >
+                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-[var(--foreground)]">
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusDotClass(402)} animate-pulse`} />
                   402
                 </span>
                 <span className="text-xs text-[var(--muted-foreground)]">
@@ -229,24 +229,33 @@ export function ApiPlayground() {
           {activeEndpoint === ep.path && flow.step === "done" && (
             <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)]">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(flow.status)}`}
-                >
+                <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-[var(--foreground)]">
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusDotClass(flow.status)}`} />
                   {flow.status}
                 </span>
                 <span className="text-xs text-[var(--muted-foreground)]">
                   {statusLabel(flow.status)}
                 </span>
               </div>
-              <pre className="p-3 text-xs font-mono text-[var(--foreground)] overflow-x-auto max-h-80 overflow-y-auto">
-                {JSON.stringify(flow.body, null, 2)}
-              </pre>
+              {flow.status === 200 ? (
+                <ReportView body={flow.body} />
+              ) : (
+                <pre className="p-3 text-xs font-mono text-[var(--foreground)] overflow-x-auto max-h-80 overflow-y-auto">
+                  {JSON.stringify(flow.body, null, 2)}
+                </pre>
+              )}
             </div>
           )}
 
           {activeEndpoint === ep.path && flow.step === "error" && (
-            <div className="mt-4 rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 overflow-hidden">
-              <div className="p-3 text-sm text-red-800 dark:text-red-400">
+            <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border)]">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--foreground)]">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+                  Error
+                </span>
+              </div>
+              <div className="p-3 text-sm text-[var(--foreground)]">
                 {flow.message}
               </div>
             </div>

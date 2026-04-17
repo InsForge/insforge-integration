@@ -32,6 +32,12 @@ Sample applications showing how to integrate third-party authentication provider
 | [`stytch`](./auth/stytch) | Next.js | [stytchauth.insforge.site](https://stytchauth.insforge.site) | [Guide](https://insforge.dev/integrations/stytch) |
 | [`workos`](./auth/workos) | Next.js | [workosauth.insforge.site](https://workosauth.insforge.site) | [Guide](https://insforge.dev/integrations/workos) |
 
+### Payment
+
+| Integration | Framework | Demo | Guide |
+| --- | --- | --- | --- |
+| [`okx-x402`](./payment/okx-x402) | Next.js | [x402pay.insforge.site](https://x402pay.insforge.site) | [Guide](https://insforge.dev/integrations/okx-x402) |
+
 ## How It Works
 
 Each integration follows the same pattern:
@@ -59,12 +65,14 @@ $$;
 
 ```text
 insforge-integration/
-└── auth/
-    ├── auth0/
-    ├── clerk/
-    ├── kinde/
-    ├── stytch/
-    └── workos/
+├── auth/
+│   ├── auth0/
+│   ├── clerk/
+│   ├── kinde/
+│   ├── stytch/
+│   └── workos/
+└── payment/
+    └── okx-x402/
 ```
 
 Each directory is an independent application with its own dependencies, environment variables, and setup instructions.
@@ -86,6 +94,8 @@ For full setup details, go directly to the integration README you want to use:
 - [`auth/kinde/README.md`](./auth/kinde/README.md)
 - [`auth/stytch/README.md`](./auth/stytch/README.md)
 - [`auth/workos/README.md`](./auth/workos/README.md)
+
+- [`payment/okx-x402/README.md`](./payment/okx-x402/README.md)
 
 ## Provide Feedback
 

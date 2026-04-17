@@ -56,11 +56,8 @@ export function Dashboard() {
 
     async function setupRealtime() {
       try {
-        console.log("[realtime] connecting...");
         await insforge.realtime.connect();
-        console.log("[realtime] connected, subscribing to x402_payments...");
         const result = await insforge.realtime.subscribe("x402_payments");
-        console.log("[realtime] subscribe result:", result);
         if (!result?.ok) {
           console.error("[realtime] subscribe failed:", result?.error);
           return;
@@ -68,7 +65,6 @@ export function Dashboard() {
         if (mounted) setRealtimeConnected(true);
 
         insforge.realtime.on("INSERT_x402_payments", (payload: { new: Payment }) => {
-          console.log("[realtime] INSERT event:", payload);
           if (!mounted) return;
           const newPayment = payload.new;
 

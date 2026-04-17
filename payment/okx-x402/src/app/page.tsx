@@ -8,11 +8,18 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8">
       <div className="w-full max-w-5xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--foreground)]">
-              Pay-per-use API demo with OKX x402 and InsForge
+        <div className="flex items-start justify-between mb-6 gap-4">
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--foreground)] leading-tight">
+              Pay-per-use APIs,
+              <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-violet-500">
+                one signature away.
+              </span>
             </h1>
+            <p className="text-sm text-[var(--muted-foreground)] mt-3">
+              OKX x402 + InsForge · USDG on X Layer · No accounts, no gas.
+            </p>
           </div>
           <ThemeSwitcher />
         </div>

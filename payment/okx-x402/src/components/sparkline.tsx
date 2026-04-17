@@ -8,7 +8,7 @@ interface SparklineProps {
 
 export function Sparkline({ values, height = 20, className = "" }: SparklineProps) {
   if (values.length === 0) {
-    return <div className={`h-[${height}px] ${className}`} aria-hidden />;
+    return <div style={{ height }} className={className} aria-hidden />;
   }
 
   const max = Math.max(...values, 1);

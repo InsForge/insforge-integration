@@ -1,6 +1,7 @@
 import { Dashboard } from "@/components/dashboard";
 import { ApiPlayground } from "@/components/api-playground";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { FlowSteps } from "@/components/flow-steps";
 
 export default function Home() {
   const isMock = process.env.MOCK_OKX_FACILITATOR === "true";
@@ -24,8 +25,9 @@ export default function Home() {
           <ThemeSwitcher />
         </div>
 
-        <div className="mb-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+        <div className="relative mb-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none">
+          <div className="absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-amber-500 to-violet-500" />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs pl-2">
             <MetaItem label="Protocol" value="x402 · exact scheme" />
             <MetaItem label="Facilitator" value="OKX" />
             <MetaItem label="Network" value="X Layer (196)" />
@@ -37,6 +39,10 @@ export default function Home() {
               </span>
             )}
           </div>
+        </div>
+
+        <div className="mb-8">
+          <FlowSteps />
         </div>
 
         <section className="mb-8">

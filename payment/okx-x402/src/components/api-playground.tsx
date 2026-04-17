@@ -83,7 +83,7 @@ export function ApiPlayground() {
       setFlow({ step: "loading" });
       const res = await fetch(endpoint.path, {
         method: endpoint.method,
-        headers: { "X-PAYMENT-SIGNATURE": paymentSignature },
+        headers: { "PAYMENT-SIGNATURE": paymentSignature },
       });
 
       const text = await res.text();

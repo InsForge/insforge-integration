@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   const paymentRequirements = buildPaymentRequirements(`${baseUrl}/api/report`);
 
   // Check for payment signature
-  const paymentSigHeader = req.headers.get("X-PAYMENT-SIGNATURE");
+  const paymentSigHeader = req.headers.get("PAYMENT-SIGNATURE");
 
   if (!paymentSigHeader) {
     return build402Response(paymentRequirements);

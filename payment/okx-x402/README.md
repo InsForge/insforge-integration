@@ -92,6 +92,6 @@ Open [http://localhost:3000](http://localhost:3000), click **Try it** on the end
 
 The client calls `POST /api/report`. The server replies `402 Payment Required` with a challenge describing the network (`eip155:196`), asset (USDG at `0x4ae46a50…`), amount, and recipient.
 
-The wallet signs an EIP-3009 `TransferWithAuthorization` using the USDG token's EIP-712 domain (`name: "Global Dollar", version: "1"`). The client re-sends the request with an `X-PAYMENT-SIGNATURE` header. The server forwards the payload to the OKX facilitator's `/verify` and `/settle` endpoints; on success it records the payment in `x402_payments` and returns the AI-generated report plus a `PAYMENT-RESPONSE` header containing the tx hash.
+The wallet signs an EIP-3009 `TransferWithAuthorization` using the USDG token's EIP-712 domain (`name: "Global Dollar", version: "1"`). The client re-sends the request with a `PAYMENT-SIGNATURE` header. The server forwards the payload to the OKX facilitator's `/verify` and `/settle` endpoints; on success it records the payment in `x402_payments` and returns the AI-generated report plus a `PAYMENT-RESPONSE` header containing the tx hash.
 
 The dashboard subscribes to the `x402_payments` realtime channel and renders every insert live, with aggregate stats and a sparkline of recent revenue.

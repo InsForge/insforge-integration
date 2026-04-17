@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createBrowserClient } from "@/lib/insforge";
 import { StatsCards } from "./stats-cards";
 import { PaymentLog } from "./payment-log";
@@ -32,6 +32,8 @@ export function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const fetchPayments = useCallback(async () => {
     const res = await fetch("/api/payments");
@@ -76,6 +78,20 @@ export function Dashboard() {
             totalRevenue: prev.totalRevenue + Number(newPayment.amount),
             latestPayment: newPayment.created_at,
           }));
+
+          // Mark the row as new for 2 seconds
+          setNewIds((prev) => new Set(prev).add(newPayment.id));
+          const existing = timeoutsRef.current.get(newPayment.id);
+          if (existing) clearTimeout(existing);
+          const t = setTimeout(() => {
+            setNewIds((prev) => {
+              const next = new Set(prev);
+              next.delete(newPayment.id);
+              return next;
+            });
+            timeoutsRef.current.delete(newPayment.id);
+          }, 2000);
+          timeoutsRef.current.set(newPayment.id, t);
         });
       } catch (err) {
         console.error("[realtime] setup failed:", err);
@@ -84,10 +100,13 @@ export function Dashboard() {
 
     setupRealtime();
 
+    const timeouts = timeoutsRef.current;
     return () => {
       mounted = false;
       setRealtimeConnected(false);
       insforge.realtime.disconnect();
+      timeouts.forEach((t) => clearTimeout(t));
+      timeouts.clear();
     };
   }, []);
 
@@ -99,12 +118,17 @@ export function Dashboard() {
     );
   }
 
+  // Last 10 payment amounts, oldest first — for sparkline
+  const recentAmounts = payments.slice(0, 10).map((p) => Number(p.amount)).reverse();
+
   return (
     <div className="flex flex-col gap-6">
       <StatsCards
         totalRequests={stats.totalRequests}
         totalRevenue={stats.totalRevenue}
         latestPayment={stats.latestPayment}
+        latestPayer={payments[0]?.payer_address ?? null}
+        recentAmounts={recentAmounts}
       />
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -118,7 +142,7 @@ export function Dashboard() {
             {realtimeConnected ? "Live" : "Connecting..."}
           </span>
         </div>
-        <PaymentLog payments={payments} />
+        <PaymentLog payments={payments} newIds={newIds} />
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
   // Record payment in InsForge
   const insforge = createServiceClient();
-  await insforge.database.from("x402_payments").insert([{
+  const { error: insertError } = await insforge.database.from("x402_payments").insert([{
     payer_address: settlement.payer,
     endpoint: "/api/report",
     amount: paymentRequirements.maxAmountRequired,
@@ -112,6 +112,9 @@ export async function POST(req: NextRequest) {
     status: "settled",
     response_summary: "Crypto Market Analysis report",
   }]);
+  if (insertError) {
+    console.error("[payment-log] insert failed:", insertError, "tx:", settlement.txHash);
+  }
 
   // Generate report (market snapshot + AI analysis)
   const assets = generateMarketSnapshot();

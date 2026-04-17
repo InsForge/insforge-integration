@@ -85,7 +85,7 @@ export function PaymentLog({ payments, newIds }: PaymentLogProps) {
                 </td>
                 <td className="px-4 py-3">
                   <a
-                    href={`https://www.okx.com/web3/explorer/xlayer/tx/${payment.tx_hash}`}
+                    href={`https://www.okx.com/web3/explorer/${payment.chain}/tx/${payment.tx_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-mono text-blue-500 hover:underline"

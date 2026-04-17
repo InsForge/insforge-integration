@@ -6,7 +6,7 @@ create table if not exists x402_payments (
   payer_address text not null,
   endpoint text not null,
   amount text not null,
-  tx_hash text not null,
+  tx_hash text not null unique,
   chain text default 'xlayer',
   status text default 'settled',
   response_summary text,

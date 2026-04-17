@@ -101,6 +101,9 @@ export async function signPayment(
   walletClient: WalletClient
 ): Promise<string> {
   const accept = challenge.accepts[0];
+  if (!accept) {
+    throw new Error("Invalid challenge: accepts array is empty");
+  }
   const [account] = await walletClient.getAddresses();
 
   // Random 32-byte nonce

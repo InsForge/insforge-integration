@@ -15,9 +15,13 @@ export async function GET() {
   }
 
   // Get aggregate stats
-  const { data: allPayments } = await insforge.database
+  const { data: allPayments, error: statsError } = await insforge.database
     .from("x402_payments")
     .select("amount");
+
+  if (statsError) {
+    return Response.json({ error: statsError.message }, { status: 500 });
+  }
 
   const totalRequests = allPayments?.length ?? 0;
   const totalRevenue = allPayments

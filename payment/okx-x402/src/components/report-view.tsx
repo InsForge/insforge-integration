@@ -62,7 +62,7 @@ export function ReportView({ body }: { body: unknown }) {
   const report = parsed?.report;
   const payment = parsed?.payment;
 
-  if (!report) {
+  if (!report || !Array.isArray(report.assets)) {
     return (
       <pre className="p-3 text-xs font-mono text-[var(--foreground)] overflow-x-auto max-h-80 overflow-y-auto">
         {JSON.stringify(body, null, 2)}

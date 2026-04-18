@@ -152,3 +152,7 @@ skills-lock.json
 .roo
 .trae
 .windsurf
+
+# Superpowers brainstorm artifacts (local-only, not for PR)
+.superpowers/
+docs/superpowers/

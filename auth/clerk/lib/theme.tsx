@@ -1,48 +1,47 @@
+'use client';
+
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-type Theme = 'system' | 'light' | 'dark';
+export type Theme = 'system' | 'light' | 'dark';
+type ResolvedTheme = 'light' | 'dark';
 
 type ThemeContextValue = {
   theme: Theme;
-  resolvedTheme: 'light' | 'dark';
+  resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = 'theme';
+const COOKIE_NAME = 'theme';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-function getStoredTheme(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
-  return 'system';
+function writeCookie(value: Theme) {
+  document.cookie = `${COOKIE_NAME}=${value}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
-function applyTheme(theme: Theme) {
+function applyTheme(theme: Theme): ResolvedTheme {
   const root = document.documentElement;
-  let resolvedTheme: 'light' | 'dark';
-
   if (theme === 'system') {
+    root.removeAttribute('data-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    resolvedTheme = prefersDark ? 'dark' : 'light';
-  } else {
-    resolvedTheme = theme;
+    return prefersDark ? 'dark' : 'light';
   }
-
-  root.setAttribute('data-theme', resolvedTheme);
-  root.style.colorScheme = resolvedTheme;
-  return resolvedTheme;
+  root.setAttribute('data-theme', theme);
+  return theme;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getStoredTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => applyTheme(getStoredTheme()));
-
-  const setTheme = useCallback((next: Theme) => {
-    localStorage.setItem(STORAGE_KEY, next);
-    setThemeState(next);
-    setResolvedTheme(applyTheme(next));
-  }, []);
+export function ThemeProvider({
+  initialTheme,
+  children,
+}: {
+  initialTheme: Theme;
+  children: ReactNode;
+}) {
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(
+    initialTheme === 'dark' ? 'dark' : 'light',
+  );
 
   useEffect(() => {
     setResolvedTheme(applyTheme(theme));
@@ -55,6 +54,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
+
+  const setTheme = useCallback((next: Theme) => {
+    writeCookie(next);
+    setThemeState(next);
+    setResolvedTheme(applyTheme(next));
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>

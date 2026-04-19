@@ -2,7 +2,7 @@
 
 [Clerk](https://clerk.com) is an authentication and user management platform that provides pre-built UI components and APIs for sign-up, sign-in, and user profiles. This example shows how to integrate Clerk with InsForge using Clerk's **JWT Templates** feature — Clerk signs tokens with InsForge's JWT secret, so InsForge accepts them natively for Row Level Security.
 
-This is a React (Vite) todo list app where users sign in via Clerk and manage their own todos stored in InsForge. RLS policies ensure each user can only access their own data.
+This is a Next.js (App Router) todo list app where users sign in via Clerk and manage their own todos stored in InsForge. RLS policies ensure each user can only access their own data.
 
 - [Source Code](https://github.com/InsForge/insforge-integration/tree/main/auth/clerk)
 - [Integration Guide](https://insforge.dev/integrations/clerk)
@@ -65,9 +65,10 @@ npx @insforge/cli secrets get JWT_SECRET
 Fill in `.env.local`:
 
 ```env
-VITE_INSFORGE_BASE_URL=...
-VITE_INSFORGE_ANON_KEY=...
-VITE_CLERK_PUBLISHABLE_KEY=pk_...
+NEXT_PUBLIC_INSFORGE_BASE_URL=...
+NEXT_PUBLIC_INSFORGE_ANON_KEY=...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
 ```
 
 ### Step 6: Run Locally
@@ -76,7 +77,7 @@ VITE_CLERK_PUBLISHABLE_KEY=pk_...
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and sign up with a new user through Clerk.
+Open [http://localhost:3000](http://localhost:3000) and sign up with a new user through Clerk.
 
 > **Note**: Since authentication is handled entirely by Clerk, you will **not** see any users in the InsForge dashboard under **Auth > Users**. User records are managed in the [Clerk Dashboard](https://dashboard.clerk.com).
 

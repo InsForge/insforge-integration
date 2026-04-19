@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { useInsforgeClient } from "../lib/insforge";
-import { AddTodoForm } from "./add-todo-form";
-import { TodoItem, type Todo } from "./todo-item";
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useInsforgeClient } from '@/lib/insforge';
+import { AddTodoForm } from './add-todo-form';
+import { TodoItem, type Todo } from './todo-item';
 
 export function TodosDisplay() {
   const { client: insforge, isReady } = useInsforgeClient();
@@ -11,12 +13,12 @@ export function TodosDisplay() {
 
   const fetchTodos = useCallback(async () => {
     const { data, error: dbError } = await insforge.database
-      .from("todos")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .from('todos')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (dbError) {
-      setError(dbError.message ?? "Failed to load todos");
+      setError(dbError.message ?? 'Failed to load todos');
       return;
     }
 
@@ -80,7 +82,7 @@ export function TodosDisplay() {
         <>
           <div className="flex items-center justify-between">
             <p className="text-sm text-[var(--muted-foreground)]">
-              {todos.length} {todos.length === 1 ? "todo" : "todos"}
+              {todos.length} {todos.length === 1 ? 'todo' : 'todos'}
             </p>
           </div>
           <ul className="space-y-3">

@@ -1,5 +1,7 @@
-import { useState } from "react";
-import type { InsForgeClient } from "@insforge/sdk";
+'use client';
+
+import { useState } from 'react';
+import type { InsForgeClient } from '@insforge/sdk';
 
 export interface Todo {
   id: string;
@@ -25,9 +27,9 @@ export function TodoItem({ todo, insforge, onChanged }: { todo: Todo; insforge: 
     setIsPending(true);
     try {
       await insforge.database
-        .from("todos")
+        .from('todos')
         .update({ is_complete: !todo.is_complete })
-        .eq("id", todo.id);
+        .eq('id', todo.id);
       onChanged();
     } finally {
       setIsPending(false);
@@ -38,9 +40,9 @@ export function TodoItem({ todo, insforge, onChanged }: { todo: Todo; insforge: 
     setIsPending(true);
     try {
       await insforge.database
-        .from("todos")
+        .from('todos')
         .delete()
-        .eq("id", todo.id);
+        .eq('id', todo.id);
       onChanged();
     } finally {
       setIsPending(false);
@@ -50,7 +52,7 @@ export function TodoItem({ todo, insforge, onChanged }: { todo: Todo; insforge: 
   return (
     <li
       className={`flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 transition ${
-        isPending ? "opacity-50" : ""
+        isPending ? 'opacity-50' : ''
       }`}
     >
       <button
@@ -59,10 +61,10 @@ export function TodoItem({ todo, insforge, onChanged }: { todo: Todo; insforge: 
         disabled={isPending}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
           todo.is_complete
-            ? "border-emerald-500 bg-emerald-500"
-            : "border-[var(--border)] hover:border-emerald-500/50"
+            ? 'border-emerald-500 bg-emerald-500'
+            : 'border-[var(--border)] hover:border-emerald-500/50'
         }`}
-        aria-label={todo.is_complete ? "Mark as incomplete" : "Mark as complete"}
+        aria-label={todo.is_complete ? 'Mark as incomplete' : 'Mark as complete'}
       >
         {todo.is_complete && (
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -74,17 +76,17 @@ export function TodoItem({ todo, insforge, onChanged }: { todo: Todo; insforge: 
         <p
           className={`text-sm font-medium ${
             todo.is_complete
-              ? "text-[var(--muted-foreground)] line-through"
-              : "text-[var(--foreground)]"
+              ? 'text-[var(--muted-foreground)] line-through'
+              : 'text-[var(--foreground)]'
           }`}
         >
           {todo.title}
         </p>
         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
           {new Date(todo.created_at).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
           })}
         </p>
       </div>

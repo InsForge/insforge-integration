@@ -36,7 +36,7 @@ Sample applications showing how to integrate third-party authentication provider
 
 | Integration | Framework | Demo | Guide |
 | --- | --- | --- | --- |
-| [`okx-x402`](./payment/okx-x402) | Next.js | [x402pay.insforge.site](https://x402pay.insforge.site) | [Guide](https://insforge.dev/integrations/okx-x402) |
+| [`okx-x402`](./payment/okx-x402) | Next.js | [okx.insforge.site](https://okx.insforge.site) | [Guide](https://insforge.dev/integrations/okx-x402) |
 
 ## How It Works
 

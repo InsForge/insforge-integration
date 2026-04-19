@@ -1,10 +1,12 @@
+'use client';
+
 import { createClient, type InsForgeClient } from '@insforge/sdk';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/nextjs';
 import { useEffect, useMemo, useState } from 'react';
 
 export function getInsforgeConfig() {
-  const baseUrl = import.meta.env.VITE_INSFORGE_BASE_URL?.trim();
-  const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY?.trim();
+  const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL?.trim();
+  const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY?.trim();
 
   return {
     baseUrl: baseUrl ?? '',
@@ -12,6 +14,9 @@ export function getInsforgeConfig() {
     isConfigured: Boolean(baseUrl),
   };
 }
+
+// Clerk JWT templates default to 60s expiry — refresh before that.
+const TOKEN_REFRESH_MS = 50_000;
 
 export function useInsforgeClient(): { client: InsForgeClient; isReady: boolean } {
   const { getToken, isSignedIn } = useAuth();
@@ -22,7 +27,7 @@ export function useInsforgeClient(): { client: InsForgeClient; isReady: boolean 
 
     if (!baseUrl || !anonKey) {
       throw new Error(
-        'Missing InsForge configuration. Set VITE_INSFORGE_BASE_URL and VITE_INSFORGE_ANON_KEY.',
+        'Missing InsForge configuration. Set NEXT_PUBLIC_INSFORGE_BASE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY.',
       );
     }
 
@@ -31,17 +36,27 @@ export function useInsforgeClient(): { client: InsForgeClient; isReady: boolean 
 
   useEffect(() => {
     if (!isSignedIn) {
+      client.getHttpClient().setAuthToken(null);
       setIsReady(false);
       return;
     }
 
-    void (async () => {
+    let cancelled = false;
+
+    const refresh = async () => {
       const token = await getToken({ template: 'insforge' });
-      if (token) {
-        client.getHttpClient().setAuthToken(token);
-      }
+      if (cancelled) return;
+      client.getHttpClient().setAuthToken(token ?? null);
       setIsReady(true);
-    })();
+    };
+
+    void refresh();
+    const interval = setInterval(() => void refresh(), TOKEN_REFRESH_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [client, getToken, isSignedIn]);
 
   return { client, isReady };

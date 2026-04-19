@@ -1,5 +1,7 @@
-import { useRef, useState } from "react";
-import type { InsForgeClient } from "@insforge/sdk";
+'use client';
+
+import { useRef, useState } from 'react';
+import type { InsForgeClient } from '@insforge/sdk';
 
 function PlusIcon() {
   return (
@@ -18,10 +20,10 @@ export function AddTodoForm({ insforge, onAdded }: { insforge: InsForgeClient; o
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const title = (formData.get("title") as string)?.trim();
+    const title = (formData.get('title') as string)?.trim();
 
     if (!title) {
-      setError("Title is required");
+      setError('Title is required');
       return;
     }
 
@@ -29,7 +31,7 @@ export function AddTodoForm({ insforge, onAdded }: { insforge: InsForgeClient; o
     setIsPending(true);
 
     const { error: dbError } = await insforge.database
-      .from("todos")
+      .from('todos')
       .insert({ title, is_complete: false });
 
     setIsPending(false);

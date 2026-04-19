@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import type { NextConfig } from 'next';
 
 function getInsforgeProjectId(): string | null {
   try {
@@ -20,10 +19,10 @@ function getInsforgeProjectId(): string | null {
   }
 }
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  define: {
-    __INSFORGE_PROJECT_ID__: JSON.stringify(getInsforgeProjectId()),
+const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_INSFORGE_PROJECT_ID: getInsforgeProjectId() ?? '',
   },
-});
+};
+
+export default nextConfig;

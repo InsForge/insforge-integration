@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '@/lib/theme';
 
 function SunIcon() {
   return (

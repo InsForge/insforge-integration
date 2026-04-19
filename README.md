@@ -27,7 +27,7 @@ Sample applications showing how to integrate third-party authentication provider
 | Integration | Framework | Demo | Guide |
 | --- | --- | --- | --- |
 | [`auth0`](./auth/auth0) | Next.js | [auth0auth.insforge.site](https://auth0auth.insforge.site) | [Guide](https://insforge.dev/integrations/auth0) |
-| [`clerk`](./auth/clerk) | React + Vite | [clerkauth.insforge.site](https://clerkauth.insforge.site) | [Guide](https://insforge.dev/integrations/clerk) |
+| [`clerk`](./auth/clerk) | Next.js | [clerkauth.insforge.site](https://clerkauth.insforge.site) | [Guide](https://insforge.dev/integrations/clerk) |
 | [`kinde`](./auth/kinde) | Next.js | [kindeauth.insforge.site](https://kindeauth.insforge.site) | [Guide](https://insforge.dev/integrations/kinde) |
 | [`stytch`](./auth/stytch) | Next.js | [stytchauth.insforge.site](https://stytchauth.insforge.site) | [Guide](https://insforge.dev/integrations/stytch) |
 | [`workos`](./auth/workos) | Next.js | [workosauth.insforge.site](https://workosauth.insforge.site) | [Guide](https://insforge.dev/integrations/workos) |
